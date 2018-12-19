@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/Microsoft/hcsshim"
 )
 
 type imageType struct {
@@ -51,7 +53,9 @@ func main() {
 		defaultFolder = `/var/lib/docker`
 		graphDriver = "overlay2"
 	}
+	var remove bool
 	flag.StringVar(&folder, "folder", "", "Root of the Docker runtime (default \""+defaultFolder+"\")")
+	flag.BoolVar(&remove, "remove", false, "Remove unreferenced layers")
 	flag.Parse()
 	if folder == "" {
 		folder = defaultFolder
@@ -91,7 +95,15 @@ func main() {
 
 	if len(unreferencedLayers) != 0 || len(unreferencedRawLayers) != 0 {
 		for _, layer := range unreferencedLayers {
-			fmt.Println("Error: Unreferenced layer in layerDB: ", layer)
+			if remove {
+				fmt.Println("Info: Unreferenced layer in layerDB: ", layer, " removing...")
+				err = removeDiskLayer(folder+"\\image\\windowsfilter\\layerdb\\sha256", layer)
+				if err != nil {
+					fmt.Println(err)
+				}
+			} else {
+				fmt.Println("Error: Unreferenced layer in layerDB: ", layer)
+			}
 		}
 
 		for _, layer := range unreferencedRawLayers {
@@ -99,6 +111,15 @@ func main() {
 				continue
 			}
 			fmt.Println("Error: Unreferenced layer in "+graphDriver+": ", layer)
+			if remove {
+				fmt.Println("Info: Unreferenced layer in windowsfilter: ", layer, " removing...")
+				err = removeDiskLayer(folder+"\\windowsfilter", layer)
+				if err != nil {
+					fmt.Println(err)
+				}
+			} else {
+				fmt.Println("Error: Unreferenced layer in windowsfilter: ", layer)
+			}
 		}
 		os.Exit(-1)
 	}
@@ -250,4 +271,12 @@ func verifyImagesAndLayers(rawLayerFolder, layerDBFolder, imageDBFolder, contain
 		}
 	}
 	return unreferencedLayers, unreferencedRawLayers, nil
+}
+
+func removeDiskLayer(location, foldername string) error {
+	info := hcsshim.DriverInfo{
+		HomeDir: location,
+		Flavour: 0,
+	}
+	return hcsshim.DestroyLayer(info, foldername)
 }
