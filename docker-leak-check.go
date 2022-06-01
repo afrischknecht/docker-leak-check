@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package main
@@ -33,7 +34,7 @@ type rawLayerType struct {
 	visited bool
 }
 
-func folderexists(path string) bool {
+func folderExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true
@@ -51,29 +52,29 @@ func main() {
 	if folder == "" {
 		folder = `C:\programdata\docker`
 	}
-	if !folderexists(folder) {
+	if !folderExists(folder) {
 		fmt.Println("Error: folder does not exist")
 		os.Exit(-1)
 	}
 
 	imageDBFolder := filepath.Join(folder, "image", "windowsfilter", "imagedb", "content", "sha256")
-	if !folderexists(imageDBFolder) {
+	if !folderExists(imageDBFolder) {
 		fmt.Printf("Error: incorrect folder structure: expected %s to exist\n", imageDBFolder)
 		os.Exit(-1)
 	}
 
 	layerDBFolder := filepath.Join(folder, "image", "windowsfilter", "layerdb", "sha256")
-	if !folderexists(layerDBFolder) {
+	if !folderExists(layerDBFolder) {
 		fmt.Printf("Error: incorrect folder structure: expected %s to exist\n", layerDBFolder)
 		os.Exit(-1)
 	}
 	rawLayerFolder := filepath.Join(folder, "windowsfilter")
-	if !folderexists(rawLayerFolder) {
+	if !folderExists(rawLayerFolder) {
 		fmt.Printf("Error: incorrect folder structure: expected %s to exist\n", rawLayerFolder)
 		os.Exit(-1)
 	}
 	containerFolder := filepath.Join(folder, "containers")
-	if !folderexists(containerFolder) {
+	if !folderExists(containerFolder) {
 		fmt.Printf("Error: incorrect folder structure: expected %s to exist\n", containerFolder)
 		os.Exit(-1)
 	}
